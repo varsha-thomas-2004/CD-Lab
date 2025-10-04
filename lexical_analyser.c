@@ -65,46 +65,47 @@ int main() {
         return 1;
     }
 
+    int inside_comment = 0; // Track if we're inside /* ... */
+
     while (fgets(line, sizeof(line), f)) {
-        int flag1 = 0;
         int len = strlen(line);
 
-        // Check for single line comment //
-        for (int i = 0; i < len; i++) {
+        // Remove newline
+        if (line[len - 1] == '\n') line[len - 1] = '\0';
+
+        // Handle multi-line comment
+        if (inside_comment) {
+            for (int i = 0; i < len - 1; i++) {
+                if (line[i] == '*' && line[i + 1] == '/') {
+                    inside_comment = 0;
+                    memmove(line, line + i + 2, len - i - 1); // remove comment part
+                    break;
+                }
+            }
+            if (inside_comment) continue; // still inside comment
+        }
+
+        // Remove single-line comment content
+        for (int i = 0; i < len - 1; i++) {
             if (line[i] == '/' && line[i + 1] == '/') {
-                flag1 = 1;
+                line[i] = '\0'; // truncate before comment
+                break;
+            }
+            if (line[i] == '/' && line[i + 1] == '*') {
+                inside_comment = 1;
+                line[i] = '\0'; // cut line before comment starts
                 break;
             }
         }
-        if (flag1) continue;
 
-        // Multi-line comment /* ... */
-        int flag2 = 0;
-        for (int i = 0; i < len; i++) {
-            if (line[i] == '/' && line[i + 1] == '*') {
-                while (fgets(line, sizeof(line), f)) {
-                    int l2 = strlen(line);
-                    for (int j = 0; j < l2; j++) {
-                        if (line[j] == '*' && line[j + 1] == '/') {
-                            flag2 = 1;
-                            break;
-                        }
-                    }
-                    if (flag2) break;
-                }
-            }
-        }
-        if (flag2) continue;
-
-        printf("\n%s\n", line);
         char token[100];
         int index = 0;
         token[0] = '\0';
 
-        for (int i = 0; i < len; i++) {
-            if (is_operator(line[i]) || is_delimiter(line[i]) || 
-                line[i] == ' ' || line[i] == '\t' || line[i] == '\n') {
-                
+        for (int i = 0; line[i] != '\0'; i++) {
+            if (is_operator(line[i]) || is_delimiter(line[i]) ||
+                line[i] == ' ' || line[i] == '\t') {
+
                 if (token[0] != '\0') {
                     if (is_keyword(token))
                         printf("%s - Keyword\n", token);
@@ -124,7 +125,7 @@ int main() {
             }
         }
 
-        // Check for last token at end of line
+        // Final token at end of line
         if (token[0] != '\0') {
             if (is_keyword(token))
                 printf("%s - Keyword\n", token);
@@ -136,6 +137,7 @@ int main() {
                 printf("%s - Identifier\n", token);
         }
     }
+
     fclose(f);
     return 0;
 }
