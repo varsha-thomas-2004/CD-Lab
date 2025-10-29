@@ -45,7 +45,6 @@ void computeFirst()
 		{ 
 			char lhs = prods[i][0]; 
 			int j = (prods[i][1] == '-' && prods[i][2] == '>') ? 3 : (prods[i][1] == '=' ? 2 : 1);
- 
 			int beforeLen = strlen(firstSet[lhs - 'A']); 
 			for (; prods[i][j] != '\0'; j++) 
 			{ 
